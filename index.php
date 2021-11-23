@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) {
      exit; // Exit if accessed directly.
 }
 
-define(‘CVL_PLUGIN_DIR’,plugin_dir_url(__FILE__));
+define('CVL_PLUGIN_DIR',plugin_dir_url(__FILE__));
 
 
 
