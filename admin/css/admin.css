@@ -1,0 +1,33 @@
+.cvl-container {
+  max-width: 768px;
+  margin: 30px auto;
+  position: relative; }
+  .cvl-container form {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center; }
+    .cvl-container form input[type="text"] {
+      min-width: 360px;
+      width: 60%;
+      margin: 0 15px; }
+    .cvl-container form button {
+      margin: 0 15px; }
+    .cvl-container form button.sending::before {
+      content: "\f463";
+      font: normal 20px/1 "dashicons";
+      color: white;
+      animation: rotation 2s infinite linear;
+      vertical-align: middle;
+      margin-right: 5px;
+      display: inline-block; }
+
+.cvl_box {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  grid-row-gap: 10px;
+  grid-column-gap: 20px; }
+
+.cvl_field {
+  display: contents; }

@@ -26,9 +26,9 @@ if (!class_exists('CVL_Admin')) {
                <div class="cvl-container">
                     <div class="row">
                          <form action="" id="cvl-bulk-form">
-                              <div class="lds-dual-ring"></div>
+                              <label for="yt-id">Enter User Id or Channel Id:</label>
                               <input type="text" id="yt-id" name="cvl-yt-id">
-                              <input class="button button-primary" type="button" value="Submit" id="cvl-yt-submit" name=" cvl-yt-submit">
+                              <button class="button button-primary" type="button" id="cvl-yt-submit" name=" cvl-yt-submit">Submit</button>
                          </form>
                     </div>
                </div>
@@ -40,42 +40,76 @@ if (!class_exists('CVL_Admin')) {
                     'methods' => "POST",
                     'callback' => array($this, 'ajax_action'),
                     // 'permission_callback' => function () {
-                    //      return current_user_can('edit_posts');
+                    //      return current_user_can('administrator');
                     // }
                ));
           }
           function ajax_action(WP_REST_Request $request)
           {
+
                $body = json_decode($request->get_body());
 
                $yt_id = sanitize_text_field($body->yt_id);
                $key = "AIzaSyAbm3Xn3KIYTEbdHVSx2n3Md8rN02HYuMc"; //yt api key
-               if (!empty($yt_id)) {
-
-                    $yt_request = wp_remote_get("https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=$yt_id&maxResults=50&key=$key");
+               $count = 0;
+               $duplicates = 0;
+               $page_token = '';
+               while (!empty($yt_id)) {
+                    $yt_request = wp_remote_get("https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=$yt_id&maxResults=50&key=$key&type=video&videoEmbeddable=true$page_token");
                     $response_code = wp_remote_retrieve_response_code($yt_request);
-                    $data = wp_remote_retrieve_body($yt_request);
-                    if (!empty($data) && post_type_exists('youtube_videos')) {
-                         $items = $data['items'] ? $data['items'] : array();
-                         foreach ($items as $item) {
-                              if ($item['id']['kind'] == 'youtube#video') {
-                                   $id = wp_insert_post(array('post_title' => 'random', 'post_type' => 'youtube_videos'));
-                                   update_post_meta($id, 'cvl_video_id', sanitize_text_field($item['id']['videoId']));
-                                   return "succes";
-                              }
-                         }
-                    } else {
-                    }
-                    //if yt request failed
-                    $response_message = wp_remote_retrieve_response_message($yt_request);
+                    $data = json_decode(wp_remote_retrieve_body($yt_request));
 
-                    return new WP_Error($response_code, $response_message);
+
+                    if (!empty($data) && post_type_exists('youtube_videos')) {
+                         $items = $data->items ? $data->items : array();
+
+                         foreach ($items as $item) {
+
+                              $video_id = $item->id->videoId;
+                              $posts = get_posts(array(
+                                   'post_type' => 'youtube_videos',
+                                   'meta_key' => 'youtube_video_id',
+                                   'meta_value' => $video_id,
+                              ));
+
+                              if (empty($posts)) { //video id doesn't exist in the database
+                                   $title = $item->snippet->title;
+                                   $description = $item->snippet->description;
+                                   $id = wp_insert_post(array(
+                                        'post_title' => $title,
+                                        'post_content' => $description,
+                                        'post_type' => 'youtube_videos',
+                                        'post_status' => 'publish',
+
+                                   ));
+                                   update_post_meta($id, 'youtube_video_id', sanitize_text_field($video_id));
+                                   $count++;
+                              } else $duplicates++;
+                         }
+                    }
+
+
+
+                    if (property_exists($data, "nextPageToken")) {
+                         $page_token = "&pageToken=$data->nextPageToken";
+                         continue;
+                    }
+                    if ($count == 0 && $duplicates == 0) {
+                         $response_message = wp_remote_retrieve_response_message($yt_request);
+
+                         return new WP_Error($response_code, $response_message);
+                    }
+                    return "$count videos created, $duplicates duplicates found";
                }
-               return new WP_Error(404, "id doesn't exist");
+
+
+               return new WP_Error(404, "user or channel id doesn't exist");
           }
           function register_scripts()
           {
+               wp_register_script('js-clv-sweet', CVL_PLUGIN_DIR . '/admin/js/sweetalert2.js');
                wp_register_script('js-clv-admin', CVL_PLUGIN_DIR . '/admin/js/admin.js');
+               wp_enqueue_script('js-clv-sweet');
                wp_enqueue_script('js-clv-admin');
                wp_localize_script('js-clv-admin', 'ajax_var', array(
                     'root' => esc_url_raw(rest_url()),

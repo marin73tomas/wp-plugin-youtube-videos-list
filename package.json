@@ -1,6 +1,10 @@
 {
   "dependencies": {
     "node-sass": "^6.0.1",
-    "sass-loader": "^12.3.0"
+    "sass-loader": "^12.3.0",
+    "sweetalert2": "^11.2.0"
+  },
+  "scripts": {
+    "sass": "node-sass admin/css/admin.scss admin/css/admin.css && node-sass public/css/frontend.scss public/css/frontend.css"
   }
 }
