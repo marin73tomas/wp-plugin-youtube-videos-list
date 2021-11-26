@@ -59,7 +59,6 @@ if (!class_exists('CVL_Admin')) {
                     $response_code = wp_remote_retrieve_response_code($yt_request);
                     $data = json_decode(wp_remote_retrieve_body($yt_request));
 
-
                     if (!empty($data) && post_type_exists('youtube_videos')) {
                          $items = $data->items ? $data->items : array();
 
@@ -83,6 +82,21 @@ if (!class_exists('CVL_Admin')) {
 
                                    ));
                                    update_post_meta($id, 'youtube_video_id', sanitize_text_field($video_id));
+
+                                   //get video categories
+                                   $video_id = $item->id->videoId;
+                                   $categories_request = wp_remote_get("https: //www.googleapis.com/youtube/v3/videoCategories?part=snippet&key=$key&id=$video_id");
+                                   $cat_data = json_decode(wp_remote_retrieve_body($categories_request));
+
+                                   if (!empty($cat_data)) {
+                                        $cat_items = $cat_data->items ? $cat_data->items : array();
+                                        foreach ($cat_items as $cat_item) {
+                                             $cat_title = $item->snippet->title;
+                                             if (!has_term($cat_title, 'youtube_videos'))
+                                                  wp_insert_term($cat_title, 'cvt_categories');
+                                        }
+                                   }
+
                                    $count++;
                               } else $duplicates++;
                          }

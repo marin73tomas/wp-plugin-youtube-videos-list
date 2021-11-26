@@ -23,15 +23,22 @@ async function setUpCVLForm() {
           });
           const data = await response.json();
           if (data) {
-            Swal.fire({
-              icon: "success",
-              title: "Success!",
-              text: data,
-            });
+            if (typeof data === "object" && data.code == "400") {
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: "Something went wrong",
+              });
+            } else {
+              Swal.fire({
+                icon: "success",
+                title: "Success!",
+                text: data,
+              });
+            }
             this.classList.remove("sending");
             form.style.opacity = 1;
             inputs.forEach((e) => (e.disabled = false));
-
           }
         }
       });

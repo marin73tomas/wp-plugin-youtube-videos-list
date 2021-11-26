@@ -49,6 +49,19 @@ if (!class_exists('CVL_Builder')) {
                );
                // Registering your Youtube Videos CPT
                register_post_type('youtube_videos', $args);
+
+               register_taxonomy(
+                    'cvt_categories',
+                    array('work'),
+                    array(
+                         'hierarchical' => true,
+                         'label' => 'Categories',
+                         'singular_label' => 'Category',
+                         'rewrite' => array('slug' => 'cvt_categories', 'with_front' => false)
+                    )
+               );
+               register_taxonomy_for_object_type('cvt_categories', 'youtube_videos'); 
+
                $set = get_option('post_type_rules_flased_cvt');
                if ($set !== true) {
                     flush_rewrite_rules(false);
